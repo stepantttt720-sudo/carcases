@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Кейсы с машинами</title>
+<style>
+*{box-sizing:border-box;font-family:system-ui,'Segoe UI',sans-serif;user-select:none;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;margin:0;background:radial-gradient(ellipse at top,#1a0e2e 0%,#0a0414 60%,#000 100%);display:flex;justify-content:center;align-items:center;padding:12px;color:#fff}
+.game{max-width:540px;width:100%;background:linear-gradient(180deg,rgba(30,15,55,.75),rgba(10,5,20,.95));border-radius:36px;padding:20px 16px;border:1px solid #4a2a7a;box-shadow:0 0 60px #7b2fff33,0 20px 40px #000}
+h1{text-align:center;font-size:1.3rem;margin:0 0 12px;color:#e0c8ff;text-shadow:0 0 20px #a855f7;letter-spacing:1px}
+
+.balance-panel{background:#120826;border-radius:50px;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border:1px solid #4a2a7a}
+.balance-label{color:#9b7ec9;font-size:.9rem}
+.balance-value{font-size:1.35rem;font-weight:800;color:#fff;text-shadow:0 0 12px #a855f7}
+
+.clicker-panel{background:linear-gradient(180deg,#1c0d33,#120826);border-radius:22px;padding:12px;margin-bottom:14px;border:1px solid #4a2a7a;text-align:center}
+.clicker-title{font-size:.75rem;color:#9b7ec9;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.clicker-btn{background:linear-gradient(180deg,#22c55e,#15803d);border:none;border-radius:50%;width:100px;height:100px;font-size:2.5rem;cursor:pointer;box-shadow:0 8px 0 #052e16,0 0 30px #22c55e66;transition:.08s;margin-bottom:8px}
+.clicker-btn:active{transform:translateY(6px);box-shadow:0 2px 0 #052e16,0 0 20px #22c55e88}
+.clicker-income{font-size:.85rem;color:#22c55e;font-weight:700}
+.clicker-income span{color:#fff;font-size:1rem;font-weight:800}
+
+.cases{display:flex;gap:8px;margin-bottom:12px}
+.case-card{flex:1;background:#120826;border-radius:20px;padding:10px 6px;text-align:center;border:2px solid #4a2a7a;cursor:pointer;transition:.2s;position:relative}
+.case-card.active{border-color:#a855f7;box-shadow:0 0 20px #a855f766;transform:translateY(-2px)}
+.case-card .case-emoji{font-size:1.6rem;line-height:1;margin-bottom:4px;display:block}
+.case-card .case-name{font-size:.68rem;font-weight:700;color:#e0c8ff;letter-spacing:.3px}
+.case-card .case-price{font-size:.7rem;font-weight:800;color:#a855f7;margin-top:2px}
+.case-card.budget.active{border-color:#22c55e;box-shadow:0 0 20px #22c55e66}
+.case-card.budget .case-price{color:#22c55e}
+.case-card.middle.active{border-color:#3b82f6;box-shadow:0 0 20px #3b82f666}
+.case-card.middle .case-price{color:#3b82f6}
+.case-card.elite.active{border-color:#f59e0b;box-shadow:0 0 20px #f59e0b66}
+.case-card.elite .case-price{color:#f59e0b}
+
+.roulette-wrap{position:relative;background:#0a0414;border-radius:20px;padding:14px 0;margin-bottom:12px;border:1px solid #4a2a7a;overflow:hidden;height:130px;display:flex;align-items:center}
+.roulette-pointer{position:absolute;left:50%;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#ff0,#f59e0b,#ff0);transform:translateX(-50%);z-index:10;box-shadow:0 0 14px #ffd700,0 0 30px #f59e0b;border-radius:2px}
+.roulette-pointer::before,.roulette-pointer::after{content:'';position:absolute;left:50%;transform:translateX(-50%);border-left:8px solid transparent;border-right:8px solid transparent}
+.roulette-pointer::before{top:-6px;border-top:10px solid #ffd700}
+.roulette-pointer::after{bottom:-6px;border-bottom:10px solid #ffd700}
+.roulette-track{display:flex;gap:8px;padding:0 40px;will-change:transform}
+.roulette-item{min-width:100px;height:100px;background:linear-gradient(180deg,#1c0d33,#120826);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;border:1px solid #4a2a7a;font-size:.65rem;text-align:center;flex-shrink:0}
+.roulette-item .ri-emoji{font-size:1.5rem;line-height:1;margin-bottom:4px}
+.roulette-item .ri-name{font-weight:700;font-size:.6rem;line-height:1.15;color:#e0c8ff}
+.roulette-item .ri-price{font-size:.55rem;color:#9b7ec9;margin-top:2px}
+.roulette-item.win{background:linear-gradient(180deg,#7b2fff,#4a1d99);border-color:#a855f7;box-shadow:0 0 20px #a855f7aa}
+
+.ri-common{border-color:#555 !important;background:linear-gradient(180deg,#2a2a2a,#1a1a1a) !important}
+.ri-uncommon{border-color:#22c55e !important;background:linear-gradient(180deg,#0a2e1a,#051a10) !important}
+.ri-rare{border-color:#3b82f6 !important;background:linear-gradient(180deg,#0a1e3e,#051028) !important}
+.ri-epic{border-color:#a855f7 !important;background:linear-gradient(180deg,#2a0d4e,#150626) !important}
+.ri-legend{border-color:#f59e0b !important;background:linear-gradient(180deg,#3e260a,#1f1305) !important}
+
+.result-card{background:#0a0414;border-radius:22px;padding:14px;margin-bottom:12px;border:2px solid #4a2a7a;text-align:center;min-height:130px;display:flex;flex-direction:column;justify-content:center;align-items:center;transition:.3s}
+.result-card.win{border-color:#ffd700;box-shadow:0 0 30px #ffd70044,inset 0 0 20px #ffd70022}
+.result-card.lose{border-color:#ef4444;box-shadow:0 0 30px #ef444444,inset 0 0 20px #ef444422}
+.result-emoji{font-size:2.5rem;line-height:1;margin-bottom:4px}
+.result-name{font-size:1rem;font-weight:800;color:#ffd700;text-shadow:0 0 12px #ffb347;margin-bottom:2px}
+.result-name.lose{color:#ef4444;text-shadow:0 0 12px #ef444488}
+.result-price{font-size:.9rem;font-weight:700;color:#e0c8ff;margin-bottom:6px}
+.result-price.lose{color:#ef4444}
+.result-rarity{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;padding:4px 14px;border-radius:20px;background:#1a0f2e;border:1px solid #4a2a7a}
+.result-placeholder{color:#6b4d99;font-size:.85rem}
+
+.btn{width:100%;border:none;border-radius:60px;padding:14px 10px;font-size:.95rem;font-weight:800;color:#fff;cursor:pointer;transition:.1s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.5px;margin-bottom:8px}
+.btn:active{transform:translateY(4px)}
+.btn:disabled{opacity:.4;pointer-events:none;filter:grayscale(.5)}
+.btn-open{background:linear-gradient(180deg,#a855f7,#6b21c8);box-shadow:0 6px 0 #3b1178,0 0 24px #a855f766}
+.btn-reset{background:linear-gradient(180deg,#333,#111);box-shadow:0 4px 0 #000;font-size:.72rem;padding:9px;color:#9b7ec9}
+
+.log{margin-top:6px;background:#0a0414;border-radius:16px;padding:9px 14px;min-height:38px;font-size:.78rem;color:#b088ff;display:flex;align-items:center;justify-content:center;text-align:center;border:1px solid #4a2a7a}
+.footer{text-align:center;margin-top:8px;font-size:.6rem;color:#6b4d99}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:none;justify-content:center;align-items:center;padding:16px;z-index:100}
+.modal-overlay.open{display:flex}
+.modal{background:linear-gradient(160deg,#1c0d33,#0a0414);border-radius:30px;padding:22px 20px;max-width:400px;width:100%;border:1px solid #a855f7;box-shadow:0 0 60px #a855f7aa;text-align:center;animation:pop .3s}
+.modal.lose{border-color:#ef4444;box-shadow:0 0 60px #ef4444aa}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-title{font-size:1.1rem;font-weight:800;color:#ffd700;margin-bottom:10px;text-shadow:0 0 14px #ffb347}
+.modal-title.lose{color:#ef4444;text-shadow:0 0 14px #ef444488}
+.modal-car{font-size:3.5rem;line-height:1;margin:8px 0}
+.modal-name{font-size:1rem;font-weight:800;color:#fff;margin-bottom:4px}
+.modal-price{font-size:1.2rem;font-weight:900;color:#ffd700;text-shadow:0 0 14px #ffb347;margin-bottom:12px}
+.modal-price.lose{color:#ef4444;text-shadow:0 0 14px #ef444488}
+.modal-rarity{font-size:.7rem;text-transform:uppercase;letter-spacing:2px;padding:5px 14px;border-radius:20px;display:inline-block;margin-bottom:14px}
+.modal-btn{background:linear-gradient(180deg,#a855f7,#6b21c8);color:#fff;border:none;border-radius:40px;padding:11px 28px;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 5px 0 #3b1178}
+.modal-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #3b1178}
+</style>
+</head>
+<body>
+<div class="game">
+    <h1>📦 КЕЙСЫ С МАШИНАМИ</h1>
+
+    <div class="balance-panel">
+        <div class="balance-label">💰 Баланс</div>
+        <div class="balance-value" id="balanceDisplay">100 000 ₽</div>
+    </div>
+
+    <div class="clicker-panel">
+        <div class="clicker-title">💵 Заработок · клик</div>
+        <button class="clicker-btn" id="clickerBtn">💵</button>
+        <div class="clicker-income">Доход: <span id="clickIncome">100 ₽</span> за клик</div>
+    </div>
+
+    <div class="cases" id="cases">
+        <div class="case-card budget active" data-case="budget">
+            <span class="case-emoji">🚗</span>
+            <div class="case-name">Бюджетный</div>
+            <div class="case-price">65 000 ₽</div>
+        </div>
+        <div class="case-card middle" data-case="middle">
+            <span class="case-emoji">🚙</span>
+            <div class="case-name">Средний</div>
+            <div class="case-price">250 000 ₽</div>
+        </div>
+        <div class="case-card elite" data-case="elite">
+            <span class="case-emoji">🏎️</span>
+            <div class="case-name">Элитный</div>
+            <div class="case-price">1 500 000 ₽</div>
+        </div>
+    </div>
+
+    <div class="roulette-wrap">
+        <div class="roulette-pointer"></div>
+        <div class="roulette-track" id="rouletteTrack"></div>
+    </div>
+
+    <div class="result-card" id="resultCard">
+        <div class="result-placeholder">Выбери кейс и нажми «Открыть»</div>
+    </div>
+
+    <button class="btn btn-open" id="openBtn">🎁 ОТКРЫТЬ КЕЙС</button>
+    <button class="btn btn-reset" id="resetBtn">🗑 Сбросить прогресс</button>
+
+    <div class="log" id="logMessage">Кликай 💵 для заработка или открывай бюджетный кейс</div>
+    <div class="footer">Заработай, открой кейс, продай машину · автосохранение</div>
+</div>
+
+<div class="modal-overlay" id="modal">
+    <div class="modal" id="modalBox">
+        <div class="modal-title" id="modalTitle">🏆 Ты выиграл!</div>
+        <div class="modal-car" id="modalCar">🚗</div>
+        <div class="modal-name" id="modalName">Лада</div>
+        <div class="modal-price" id="modalPrice">500 000 ₽</div>
+        <div class="modal-rarity" id="modalRarity">Редкая</div>
+        <button class="modal-btn" id="modalOk">Забрать</button>
+    </div>
+</div>
+
+<script>
+(function(){
+    var SAVE_KEY = 'carCases_save_v4';
+
+    var BUDGET_CARS = [
+        { name:'ВАЗ 2101',    emoji:'🚗', price:30000,  rarity:'common',   weight:350 },
+        { name:'ВАЗ 2105',    emoji:'🚗', price:45000,  rarity:'common',   weight:300 },
+        { name:'ВАЗ 2106',    emoji:'🚗', price:50000,  rarity:'common',   weight:280 },
+        { name:'ВАЗ 2107',    emoji:'🚗', price:60000,  rarity:'common',   weight:250 },
+        { name:'ВАЗ 2109',    emoji:'🚗', price:80000,  rarity:'common',   weight:200 },
+        { name:'ВАЗ 2110',    emoji:'🚗', price:100000, rarity:'uncommon', weight:120 },
+        { name:'ВАЗ 2112',    emoji:'🚗', price:130000, rarity:'uncommon', weight:80 },
+        { name:'Приора',      emoji:'🚙', price:200000, rarity:'rare',     weight:35 },
+        { name:'Калина',      emoji:'🚙', price:250000, rarity:'rare',     weight:20 },
+        { name:'Гранта',      emoji:'🚙', price:400000, rarity:'epic',     weight:8 },
+        { name:'Нива 4x4',    emoji:'🚙', price:600000, rarity:'epic',     weight:4 },
+        { name:'Lada Vesta',  emoji:'🚘', price:1500000,rarity:'legend',   weight:1 }
+    ];
+
+    var MIDDLE_CARS = [
+        { name:'Ржавая копейка',  emoji:'🚗', price:50000,  rarity:'common',   weight:200 },
+        { name:'Убитая семёрка',  emoji:'🚗', price:80000,  rarity:'common',   weight:180 },
+        { name:'Рено Логан',      emoji:'🚗', price:150000, rarity:'common',   weight:160 },
+        { name:'Лада Гранта',     emoji:'🚗', price:250000, rarity:'common',   weight:140 },
+        { name:'Kia Rio',         emoji:'🚙', price:400000, rarity:'uncommon', weight:110 },
+        { name:'Hyundai Solaris', emoji:'🚙', price:550000, rarity:'uncommon', weight:80 },
+        { name:'VW Polo',         emoji:'🚙', price:700000, rarity:'rare',     weight:50 },
+        { name:'Skoda Rapid',     emoji:'🚙', price:850000, rarity:'rare',     weight:30 },
+        { name:'Lada Vesta SW',   emoji:'🚘', price:1200000,rarity:'rare',     weight:15 },
+        { name:'Kia K5',          emoji:'🚘', price:2000000,rarity:'epic',     weight:8 },
+        { name:'Toyota Camry',    emoji:'🚘', price:3000000,rarity:'legend',   weight:3 }
+    ];
+
+    var ELITE_CARS = [
+        { name:'Lada Vesta',      emoji:'🚘', price:800000,  rarity:'common',   weight:220 },
+        { name:'Гранта',          emoji:'🚙', price:400000,  rarity:'common',   weight:180 },
+        { name:'VW Polo',         emoji:'🚙', price:900000,  rarity:'common',   weight:160 },
+        { name:'Toyota Camry',    emoji:'🚘', price:2500000, rarity:'common',   weight:130 },
+        { name:'Kia K5',          emoji:'🚘', price:3000000, rarity:'uncommon', weight:100 },
+        { name:'Hyundai Sonata',  emoji:'🚘', price:3500000, rarity:'uncommon', weight:80 },
+        { name:'Mazda 6',         emoji:'🚘', price:4000000, rarity:'rare',     weight:50 },
+        { name:'VW Passat',       emoji:'🚘', price:4500000, rarity:'rare',     weight:35 },
+        { name:'BMW 3 серии',     emoji:'🏎️', price:5500000, rarity:'rare',     weight:25 },
+        { name:'Audi A6',         emoji:'🏎️', price:6500000, rarity:'epic',     weight:15 },
+        { name:'Mercedes E-класс',emoji:'🏎️', price:7500000, rarity:'epic',     weight:10 },
+        { name:'BMW 5 серии',     emoji:'🏎️', price:8500000, rarity:'epic',     weight:5 },
+        { name:'Porsche 911',     emoji:'🏎️', price:10000000,rarity:'legend',   weight:2 }
+    ];
+
+    var CASES = {
+        budget: { name:'Бюджетный', price:65000,   cars:BUDGET_CARS },
+        middle: { name:'Средний',   price:250000,  cars:MIDDLE_CARS },
+        elite:  { name:'Элитный',   price:1500000, cars:ELITE_CARS  }
+    };
+
+    var RARITY_NAMES = {
+        common:'Обычная', uncommon:'Необычная', rare:'Редкая',
+        epic:'Эпическая', legend:'Легендарная'
+    };
+
+    var state = {
+        balance: 100000,
+        selectedCase: 'budget',
+        totalOpened: 0,
+        bestCar: null,
+        history: [],
+        clickIncome: 100,
+        spinning: false
+    };
+
+    var $ = function(id){ return document.getElementById(id); };
+    var balanceDisplay = $('balanceDisplay');
+    var rouletteTrack = $('rouletteTrack');
+    var resultCard = $('resultCard');
+    var openBtn = $('openBtn');
+    var resetBtn = $('resetBtn');
+    var logMessage = $('logMessage');
+    var casesEl = $('cases');
+    var modal = $('modal');
+    var modalBox = $('modalBox');
+    var clickerBtn = $('clickerBtn');
+    var clickIncome = $('clickIncome');
+
+    function save(){
+        try {
+            localStorage.setItem(SAVE_KEY, JSON.stringify({
+                balance: state.balance,
+                selectedCase: state.selectedCase,
+                totalOpened: state.totalOpened,
+                bestCar: state.bestCar,
+                history: state.history,
+                clickIncome: state.clickIncome
+            }));
+        } catch(e){}
+    }
+    function load(){
+        try {
+            var raw = localStorage.getItem(SAVE_KEY);
+            if (!raw) return false;
+            var d = JSON.parse(raw);
+            for (var k in d) if (d.hasOwnProperty(k)) state[k] = d[k];
+            state.spinning = false;
+            return true;
+        } catch(e){ return false; }
+    }
+
+    function pickWeighted(cars){
+        var total = 0;
+        for (var i=0;i<cars.length;i++) total += cars[i].weight;
+        var r = Math.random() * total;
+        var acc = 0;
+        for (var i=0;i<cars.length;i++){
+            acc += cars[i].weight;
+            if (r <= acc) return cars[i];
+        }
+        return cars[cars.length-1];
+    }
+
+    function updateUI(){
+        balanceDisplay.textContent = Math.floor(state.balance).toLocaleString('ru-RU') + ' ₽';
+        var btns = casesEl.querySelectorAll('.case-card');
+        for (var i=0;i<btns.length;i++){
+            var c = btns[i].getAttribute('data-case');
+            btns[i].classList.toggle('active', c === state.selectedCase);
+        }
+        openBtn.textContent = '🎁 ОТКРЫТЬ ЗА ' + CASES[state.selectedCase].price.toLocaleString('ru-RU') + ' ₽';
+        clickIncome.textContent = state.clickIncome.toLocaleString('ru-RU') + ' ₽';
+    }
+
+    function doClick(){
+        state.balance += state.clickIncome;
+        updateUI();
+        save();
+    }
+
+    function buildRoulette(cars, winnerIndex){
+        rouletteTrack.style.transition = 'none';
+        rouletteTrack.style.transform = 'translateX(0)';
+        rouletteTrack.innerHTML = '';
+
+        var totalItems = 60;
+        var items = [];
+        for (var i=0;i<totalItems;i++){
+            if (i === totalItems-10) {
+                items.push({ car: cars[winnerIndex], isWin: true });
+            } else {
+                var c = cars[Math.floor(Math.random()*cars.length)];
+                items.push({ car: c, isWin: false });
+            }
+        }
+
+        for (var i=0;i<items.length;i++){
+            var it = items[i];
+            var div = document.createElement('div');
+            div.className = 'roulette-item ri-'+it.car.rarity + (it.isWin ? ' win' : '');
+            div.innerHTML = '<div class="ri-emoji">'+it.car.emoji+'</div>'
+                          + '<div class="ri-name">'+it.car.name+'</div>'
+                          + '<div class="ri-price">'+(it.car.price/1000)+'к</div>';
+            rouletteTrack.appendChild(div);
+        }
+    }
+
+    function animateRoulette(){
+        var items = rouletteTrack.children;
+        var winnerEl = null;
+        for (var i=0;i<items.length;i++){
+            if (items[i].classList.contains('win')) { winnerEl = items[i]; break; }
+        }
+        if (!winnerEl) return;
+
+        var container = rouletteTrack.parentElement;
+        var containerWidth = container.offsetWidth;
+        var targetOffset = winnerEl.offsetLeft + winnerEl.offsetWidth/2 - containerWidth/2;
+
+        rouletteTrack.style.transition = 'none';
+        rouletteTrack.style.transform = 'translateX(0)';
+        void rouletteTrack.offsetWidth;
+        rouletteTrack.style.transition = 'transform 5s cubic-bezier(.15,.9,.25,1)';
+        rouletteTrack.style.transform = 'translateX(-'+targetOffset+'px)';
+    }
+
+    function openCase(){
+        if (state.spinning) return;
+        var caseData = CASES[state.selectedCase];
+        if (state.balance < caseData.price){
+            logMessage.textContent = '❌ Недостаточно денег! Нужно ' + caseData.price.toLocaleString('ru-RU') + ' ₽';
+            return;
+        }
+
+        state.spinning = true;
+        state.balance -= caseData.price;
+        state.totalOpened++;
+        updateUI();
+        save();
+
+        var winner = pickWeighted(caseData.cars);
+        var winnerIndex = caseData.cars.indexOf(winner);
+
+        resultCard.innerHTML = '<div class="result-placeholder">🎲 Крутим...</div>';
+        resultCard.classList.remove('win','lose');
+        buildRoulette(caseData.cars, winnerIndex);
+        setTimeout(animateRoulette, 50);
+
+        setTimeout(function(){
+            showResult(winner, caseData.price);
+            state.spinning = false;
+            updateUI();
+        }, 5200);
+
+        logMessage.textContent = '🎁 Открываем ' + caseData.name.toLowerCase() + ' кейс...';
+    }
+
+    function showResult(car, casePrice){
+        var profit = car.price - casePrice;
+        var isLoss = profit < 0;
+        var profitText = isLoss
+            ? '− ' + Math.abs(profit).toLocaleString('ru-RU') + ' ₽'
+            : '+ ' + profit.toLocaleString('ru-RU') + ' ₽';
+
+        resultCard.classList.remove('win','lose');
+        resultCard.classList.add(isLoss ? 'lose' : 'win');
+
+        var nameClass = isLoss ? 'result-name lose' : 'result-name';
+        var priceClass = isLoss ? 'result-price lose' : 'result-price';
+
+        resultCard.innerHTML =
+            '<div class="result-emoji">'+car.emoji+'</div>'+
+            '<div class="'+nameClass+'">'+car.name+'</div>'+
+            '<div class="'+priceClass+'">'+profitText+'</div>'+
+            '<div class="result-rarity ri-'+car.rarity+'">'+RARITY_NAMES[car.rarity]+'</div>';
+
+        state.history.unshift({ name: car.name, price: car.price, rarity: car.rarity });
+        if (state.history.length > 20) state.history.pop();
+        if (!state.bestCar || car.price > state.bestCar.price) state.bestCar = car;
+
+        state.balance += car.price;
+
+        modalBox.classList.toggle('lose', isLoss);
+        var title = $('modalTitle');
+        title.textContent = isLoss ? '😢 Минус!' : '🏆 Ты выиграл!';
+        title.className = isLoss ? 'modal-title lose' : 'modal-title';
+        $('modalCar').textContent = car.emoji;
+        $('modalName').textContent = car.name;
+
+        var priceEl = $('modalPrice');
+        priceEl.textContent = profitText + ' (машина: ' + car.price.toLocaleString('ru-RU') + ' ₽)';
+        priceEl.className = isLoss ? 'modal-price lose' : 'modal-price';
+
+        var rar = $('modalRarity');
+        rar.textContent = RARITY_NAMES[car.rarity];
+        rar.className = 'modal-rarity ri-'+car.rarity;
+        modal.classList.add('open');
+
+        logMessage.textContent = (isLoss ? '📉 Минус: ' : '🏆 ') + car.name + ' · ' + profitText;
+        updateUI();
+        save();
+    }
+
+    function selectCase(code){
+        if (state.spinning) return;
+        state.selectedCase = code;
+        updateUI();
+        save();
+        var c = CASES[code];
+        logMessage.textContent = '📦 Выбран ' + c.name.toLowerCase() + ' кейс за ' + c.price.toLocaleString('ru-RU') + ' ₽';
+    }
+
+    function resetProgress(){
+        if (!confirm('Сбросить весь прогресс? Баланс вернётся к 100 000 ₽')) return;
+        localStorage.removeItem(SAVE_KEY);
+        location.reload();
+    }
+
+    function init(){
+        var loaded = load();
+
+        if (!loaded){
+            state.balance = 100000;
+            state.clickIncome = 100;
+            logMessage.textContent = '🎁 Стартовый баланс 100 000 ₽! Кликай 💵 или открывай кейс.';
+        } else {
+            logMessage.textContent = '💾 Прогресс загружен. Баланс: ' + Math.floor(state.balance).toLocaleString('ru-RU') + ' ₽';
+        }
+
+        var caseBtns = casesEl.querySelectorAll('.case-card');
+        for (var i=0;i<caseBtns.length;i++){
+            (function(b){
+                b.addEventListener('click', function(){
+                    selectCase(b.getAttribute('data-case'));
+                });
+            })(caseBtns[i]);
+        }
+
+        openBtn.addEventListener('click', openCase);
+        resetBtn.addEventListener('click', resetProgress);
+        clickerBtn.addEventListener('click', doClick);
+        $('modalOk').addEventListener('click', function(){ modal.classList.remove('open'); });
+        modal.addEventListener('click', function(e){ if (e.target === modal) modal.classList.remove('open'); });
+
+        updateUI();
+        save();
+    }
+
+    init();
+})();
+</script>
+</body>
+</html>
